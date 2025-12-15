@@ -1,0 +1,77 @@
+server:
+  port: 8040
+
+spring:
+  application:
+    name: backoffice-bff
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/CourseRealm}
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: backoffice-bff
+            client-secret: ${KEYCLOAK_CLIENT_SECRET_BACKOFFICE:hgDVSKURLE6VUsHT09AaZ3YlhYRy1JsF}
+            scope: openid, profile, email, roles
+
+  cloud:
+    gateway:
+      default-filters:
+        - SaveSession
+      routes:
+        - id: user
+          uri: ${USER_SERVICE_URI:http://localhost:9000}
+          predicates:
+            - Path=/api/user-service/**
+          filters:
+            - TokenRelay
+            - StripPrefix=1
+        - id: cart
+          uri: ${CART_SERVICE_URI:http://localhost:9001}
+          predicates:
+            - Path=/api/cart-service/**
+          filters:
+            - TokenRelay
+            - StripPrefix=1
+        - id: course
+          uri: ${COURSE_SERVICE_URI:http://localhost:9002}
+          predicates:
+            - Path=/api/course-service/**
+          filters:
+            - TokenRelay
+            - StripPrefix=1
+        - id: reactjs
+          uri: ${BACKOFFICE_REACTJS_URI:http://localhost:3040}
+          predicates:
+            - Path=/**
+
+  #      routes:
+  #        - id: user-service
+  #          uri: ${USER_SERVICE_URI:http://localhost:9000}
+  #          predicates:
+  #            - Path=/api/user-service/**
+  #          filters:
+  #            - TokenRelay
+  #            - StripPrefix=1
+  #
+  #        - id: course-service
+  #          uri: ${COURSE_SERVICE_URI:http://localhost:9002}
+  #          predicates:
+  #            - Path=/api/course-service/**
+  #          filters:
+  #            - TokenRelay
+  #            - StripPrefix=1
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+service-uri:
+  services:
+    backoffice: ${BACKOFFICE_REACTJS_URI:http://localhost:3040}
+    user-service: ${USER_SERVICE_URI:http://localhost:9000}
+  token-id: backoffice-bff
+  token-secret: ${KEYCLOAK_CLIENT_SECRET_BACKOFFICE:hgDVSKURLE6VUsHT09AaZ3YlhYRy1JsF}
